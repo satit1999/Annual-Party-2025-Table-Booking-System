@@ -1,0 +1,5 @@
+{
+  "name": "Annual Party 2025 – Table Booking System",
+  "description": "A web application for booking tables and seats for the Satit Udomseuksa School's annual event in 2025. Users can view the table layout, select seats or entire tables, fill in their information, and confirm their booking. The application also includes an admin dashboard to view all bookings and statistics.",
+  "requestFramePermissions": []
+}
