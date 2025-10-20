@@ -14,12 +14,11 @@ const adminUsers = [
     { fullName: 'นางนราวรรณ สุ่นตระกูล', username: '0970601930', password: '0970601930' },
     { fullName: 'น.ส.นาถนรี ปรียานนท์', username: '0949647964', password: '0949647964' },
     { fullName: 'น.ส.บุศรัตน์ พลอยเลิศ', username: '0651562457', password: '0651562457' },
-    { fullName: 'นายพสิษฐ์ สัตบุตร', username: 'A0833759527', password: 'A0833759527' },
+    { fullName: 'นายพสิษฐ์ สัตบุตร', username: '0833759527', password: '0833759527' },
     { fullName: 'น.ส.รุ่งนภา พรมบุตร', username: '0969780682', password: '0969780682' },
     { fullName: 'นางอรวรรณ ไชยบาล', username: '0651561755', password: '0651561755' },
     { fullName: 'น.ส.เพชรพัชรี สุระปัญญา', username: '0924606190', password: '0924606190' },
     { fullName: 'นายเสฎฐวุฒิ แก้วมรกต', username: '0652630965', password: '0652630965' },
-    { fullName: 'นายเอื้อวิช วัฒนะวิโรฒ', username: '0958607873', password: '0958607873' },
     { fullName: 'นายวิศัลย์ เพ็ชรตระกูล', username: '0818343465', password: '0818343465' },
     { fullName: 'นางปราณี เรียนรู้', username: '08802105933', password: '08802105933' },
 ];
