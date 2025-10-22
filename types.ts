@@ -23,9 +23,11 @@ export interface Booking {
     student: StudentInfo;
     seats: string[];
     total: number;
-    status: 'confirmed' | 'cancelled';
+    status: 'pending_payment' | 'confirmed' | 'cancelled';
     timestamp: string;
     bookedBy?: string;
+    paymentTimestamp?: string;
+    confirmedBy?: string;
 }
 
 export interface Translations {

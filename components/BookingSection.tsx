@@ -17,11 +17,10 @@ interface BookingSectionProps {
 }
 
 const BookingSection: React.FC<BookingSectionProps> = (props) => {
-    const { isAdminLoggedIn } = props;
     return (
-        <div className={`grid grid-cols-1 ${isAdminLoggedIn ? 'lg:grid-cols-[1fr_320px]' : ''} gap-8 items-start`}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
             <TableLayout {...props} />
-            {isAdminLoggedIn && <BookingSummary {...props} />}
+            <BookingSummary {...props} />
         </div>
     );
 };

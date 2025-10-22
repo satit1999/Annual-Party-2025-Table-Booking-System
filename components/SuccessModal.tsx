@@ -82,7 +82,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ booking, onClose, currentLa
                 onClick={(e) => e.stopPropagation()}
             >
                 <div ref={modalContentRef} className="p-6 md:p-8">
-                    <div className="printable-area">
+                    <div className="printable-area bg-white p-4">
                         <div className="text-center">
                             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-3">
                                 <span className="material-icons text-4xl text-green-600">check_circle_outline</span>
@@ -100,11 +100,25 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ booking, onClose, currentLa
                                     <InfoRow label={t.studentNameHeader} value={`${booking.student.prefix} ${booking.student.firstName} ${booking.student.lastName}`} />
                                     <InfoRow label={t.seatNamesLabel} value={booking.seats.join(', ')} />
                                     <InfoRow label={t.summaryTotal} value={`${booking.total.toLocaleString()} ${t.currency}`} />
+                                     <div className="flex justify-between items-center py-1">
+                                        <span className="text-gray-500">{t.statusHeader}:</span>
+                                        <span className="font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">{t.pendingPaymentStatus}</span>
+                                    </div>
+                                </div>
+                            </div>
+                             <div>
+                                <h4 className="font-semibold text-gray-700 mb-2 text-center">{t.paymentQrCodeTitle}</h4>
+                                <div className="flex flex-col items-center gap-2">
+                                    <img src="./assets/payment-qr.svg" alt="Payment QR Code" className="w-36 h-36" />
+                                    <div className="text-center text-sm">
+                                        <p className="text-gray-600">{t.accountNameLabel}:</p>
+                                        <p className="font-bold">นางนราวรรณ สุ่นตระกูล</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 mt-4">
                         <button
                             onClick={handleSaveAsJpeg}
                             className="w-full bg-[#aa3a3b] text-white font-bold py-3 px-6 rounded-lg transition-all hover:bg-[#8b2f30] flex items-center justify-center gap-2"

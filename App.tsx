@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import NavTabs from './components/NavTabs';
@@ -42,8 +43,39 @@ const App: React.FC = () => {
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    setBookings(result.data);
-                    localStorage.setItem('tableBookings', JSON.stringify(result.data));
+                    // Check for expired bookings
+                    const now = new Date();
+                    const twentyFourHoursAgo = now.getTime() - (24 * 60 * 60 * 1000);
+                    const bookingsFromSheet: Booking[] = result.data;
+                    const bookingsToCancel: Booking[] = [];
+                    const validBookings: Booking[] = [];
+
+                    bookingsFromSheet.forEach((b: Booking) => {
+                        if (b.status === 'pending_payment' && new Date(b.timestamp).getTime() < twentyFourHoursAgo) {
+                            bookingsToCancel.push({ ...b, status: 'cancelled' });
+                        } else {
+                            validBookings.push(b);
+                        }
+                    });
+                    
+                    if (bookingsToCancel.length > 0) {
+                        console.log(`Found ${bookingsToCancel.length} expired bookings. Cancelling...`);
+                        const cancelPromises = bookingsToCancel.map(b => 
+                            fetch(GOOGLE_SHEET_API_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                body: JSON.stringify({ action: 'UPDATE', payload: b })
+                            })
+                        );
+                        await Promise.all(cancelPromises);
+                        const finalBookings = [...validBookings, ...bookingsToCancel];
+                        setBookings(finalBookings);
+                        localStorage.setItem('tableBookings', JSON.stringify(finalBookings));
+                    } else {
+                        setBookings(bookingsFromSheet);
+                        localStorage.setItem('tableBookings', JSON.stringify(bookingsFromSheet));
+                    }
+
                 } else {
                     throw new Error(result.message || "An unknown error occurred while fetching data.");
                 }
@@ -71,7 +103,7 @@ const App: React.FC = () => {
         const newBooking: Booking = {
             id: newBookingId,
             ...newBookingData,
-            status: 'confirmed',
+            status: 'pending_payment',
             timestamp: new Date().toISOString(),
             bookedBy: isAdminLoggedIn ? loggedInUser ?? undefined : undefined,
         };
@@ -109,6 +141,55 @@ const App: React.FC = () => {
         setCompletedBooking(newBooking);
         return true;
     }, [bookings, isAdminLoggedIn, loggedInUser]);
+
+    const handleConfirmPayment = async (bookingId: string) => {
+        const bookingToConfirm = bookings.find(b => b.id === bookingId);
+        if (!bookingToConfirm) return;
+
+        const confirmedBooking: Booking = {
+            ...bookingToConfirm,
+            status: 'confirmed',
+            confirmedBy: loggedInUser ?? 'Admin',
+            paymentTimestamp: new Date().toISOString(),
+        };
+
+        Swal.fire({
+            title: translations[currentLanguage].swalConfirmingPaymentTitle,
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading(),
+        });
+
+        try {
+            const response = await fetch(GOOGLE_SHEET_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'UPDATE', payload: confirmedBooking })
+            });
+            const result = await response.json();
+            if (!response.ok || result.status !== 'success') {
+                throw new Error(result.message || 'API returned an error');
+            }
+
+            const updatedBookings = bookings.map(b => b.id === bookingId ? confirmedBooking : b);
+            setBookings(updatedBookings);
+            localStorage.setItem('tableBookings', JSON.stringify(updatedBookings));
+            
+            Swal.fire({
+                icon: 'success',
+                title: translations[currentLanguage].swalSuccessTitle,
+                text: translations[currentLanguage].swalPaymentConfirmedText,
+                confirmButtonColor: '#aa3a3b',
+            });
+        } catch (error) {
+            console.error("Failed to confirm payment:", error);
+            Swal.fire({
+                icon: 'error',
+                title: translations[currentLanguage].swalErrorTitle,
+                text: translations[currentLanguage].swalPaymentConfirmErrorText,
+                confirmButtonColor: '#aa3a3b',
+            });
+        }
+    };
 
     const handleConfirmCancellation = async (bookingId: string, seatsToCancel: string[]) => {
         let bookingToUpdate: Booking | undefined;
@@ -204,11 +285,12 @@ const App: React.FC = () => {
         let updatedBooking: Booking | null = null;
         const updatedBookings = bookings.map(b => {
             if (b.id === editingBookingId) {
+                const originalBooking = bookings.find(ob => ob.id === editingBookingId);
                 updatedBooking = {
-                    ...b,
+                    ...(originalBooking as Booking),
                     seats: selectedSeats.sort(),
                     total: calculateTotalPrice(selectedSeats),
-                    status: selectedSeats.length > 0 ? 'confirmed' : 'cancelled',
+                    status: selectedSeats.length > 0 ? (originalBooking?.status ?? 'pending_payment') : 'cancelled',
                     bookedBy: isAdminLoggedIn ? loggedInUser ?? undefined : b.bookedBy,
                 };
                 return updatedBooking;
@@ -331,6 +413,7 @@ const App: React.FC = () => {
                             currentLanguage={currentLanguage}
                             onEditStart={handleEditStart}
                             onCancelStart={setCancellingBooking}
+                            onConfirmPayment={handleConfirmPayment}
                         />
                     )}
                 </div>

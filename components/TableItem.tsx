@@ -1,12 +1,13 @@
+
 import React from 'react';
 import { SEATS_PER_TABLE, translations } from '../constants';
-import { Language } from '../types';
+import { Language, Booking } from '../types';
 
 
 interface TableItemProps {
     tableId: string;
     selectedSeats: string[];
-    bookingDetails: Map<string, string>;
+    bookingDetails: Map<string, { bookerName: string, status: Booking['status'] }>;
     onSeatSelect: (seatId: string) => void;
     onTableSelect: (tableId: string) => void;
     isAdminLoggedIn: boolean;
@@ -27,43 +28,38 @@ const getChairPosition = (index: number, totalSeats: number) => {
 const TableItem: React.FC<TableItemProps> = ({ tableId, selectedSeats, bookingDetails, onSeatSelect, onTableSelect, isAdminLoggedIn, currentLanguage, isLocked }) => {
     const t = translations[currentLanguage];
     const seats = Array.from({ length: SEATS_PER_TABLE }, (_, i) => `${tableId}-${String.fromCharCode(65 + i)}`);
+    
     const numBooked = seats.filter(seatId => bookingDetails.has(seatId)).length;
     const areAllSeatsSelected = seats.every(seat => selectedSeats.includes(seat));
     const isAnySeatSelectedByAdmin = isAdminLoggedIn && seats.some(seatId => selectedSeats.includes(seatId));
     const isFullyBooked = numBooked === SEATS_PER_TABLE;
 
-    // Allow interaction ONLY if the user is an admin and the table isn't full.
-    const canInteract = isAdminLoggedIn && !isFullyBooked;
-
     let status = 'available';
     if (isFullyBooked) {
         status = 'booked';
-    } else if (areAllSeatsSelected) { // Simplified for both admin/public
+    } else if (areAllSeatsSelected) {
         status = 'selected';
-    } else if (numBooked > 0 || seats.some(seatId => selectedSeats.includes(seatId))) { // Simplified for both admin/public
+    } else if (numBooked > 0 || seats.some(seatId => selectedSeats.includes(seatId))) {
         status = 'partial';
     }
-
 
     const statusClasses = {
         available: 'border-green-400 bg-green-50 text-green-800',
         selected: 'border-[#aa3a3b] bg-[#aa3a3b] text-white',
         partial: 'border-green-700 bg-green-600 text-white',
         booked: 'border-red-400 bg-red-500 text-white cursor-not-allowed opacity-70',
-        locked: 'border-gray-300 bg-gray-200 text-gray-500', // For available tables in a locked row
+        locked: 'border-gray-300 bg-gray-200 text-gray-500',
     };
     
-    // Determine table visual status
     const isVisuallyLocked = isLocked && !isAnySeatSelectedByAdmin;
     const tableStatusKey = (isVisuallyLocked && status === 'available') ? 'locked' : status;
     const tableClasses = statusClasses[tableStatusKey as keyof typeof statusClasses];
     
-    // Determine cursor based on interactability
+    const canInteract = isAdminLoggedIn && !isFullyBooked;
     const tableCursorClass = canInteract ? 'cursor-pointer' : (isFullyBooked ? 'cursor-not-allowed' : 'cursor-default');
     
     return (
         <div className="relative group w-full aspect-square flex items-center justify-center">
-            {/* Table */}
             <div
                 onClick={() => {
                     if (canInteract) {
@@ -75,17 +71,25 @@ const TableItem: React.FC<TableItemProps> = ({ tableId, selectedSeats, bookingDe
                 <span>{tableId}</span>
             </div>
 
-            {/* Chairs */}
             {seats.map((seatId, index) => {
                 const isBooked = bookingDetails.has(seatId);
+                const seatDetails = bookingDetails.get(seatId);
                 const isSelected = selectedSeats.includes(seatId);
                 
                 let chairColorClass = 'bg-green-500'; // Default available
-                if (isBooked) {
-                    chairColorClass = 'bg-red-500';
-                } else if (isSelected) {
+                if (isBooked && seatDetails) {
+                    if (seatDetails.status === 'pending_payment') {
+                        chairColorClass = 'bg-orange-500';
+                    } else if (seatDetails.status === 'confirmed') {
+                        chairColorClass = 'bg-red-500';
+                    }
+                }
+                
+                if (isSelected) {
                     chairColorClass = 'bg-[#8b2f30] ring-2 ring-white';
-                } else if (isLocked && !isAdminLoggedIn) { // Only lock for non-admins
+                }
+                
+                if (isLocked && !isAdminLoggedIn && !isBooked && !isSelected) {
                     chairColorClass = 'bg-gray-400';
                 }
 

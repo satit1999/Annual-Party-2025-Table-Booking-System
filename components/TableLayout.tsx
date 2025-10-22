@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Booking, Language } from '../types';
 import { translations, SEATS_PER_TABLE, TOTAL_MAIN_TABLES, TOTAL_RESERVE_TABLES } from '../constants';
@@ -19,13 +20,13 @@ const TableLayout: React.FC<TableLayoutProps> = ({ selectedSeats, setSelectedSea
     const t = translations[currentLanguage];
 
     const bookingDetailsMap = useMemo(() => {
-        const map = new Map<string, string>();
+        const map = new Map<string, { bookerName: string; status: Booking['status'] }>();
         bookings
-            .filter(b => b.id !== editingBookingId)
+            .filter(b => b.id !== editingBookingId && b.status !== 'cancelled')
             .forEach(booking => {
                 const bookerName = `${booking.parent.prefix} ${booking.parent.firstName} ${booking.parent.lastName}`;
                 booking.seats.forEach(seatId => {
-                    map.set(seatId, bookerName);
+                    map.set(seatId, { bookerName, status: booking.status });
                 });
             });
         return map;
@@ -203,10 +204,10 @@ const TableLayout: React.FC<TableLayoutProps> = ({ selectedSeats, setSelectedSea
             </div>
 
             <div className="flex justify-center flex-wrap gap-x-6 gap-y-3 mt-12 pt-8 border-t-2 border-dashed border-gray-300">
-                <LegendItem colorClasses="bg-green-50 border-2 border-green-500" label={t.legendAvailable} />
-                <LegendItem colorClasses="bg-[#aa3a3b] border-2 border-[#8b2f30]" label={t.legendSelected} />
-                <LegendItem colorClasses="bg-green-600 border-2 border-green-700" label={t.legendPartial} />
-                <LegendItem colorClasses="bg-red-500 border-2 border-red-600" label={t.legendBooked} />
+                <LegendItem colorClasses="bg-green-500" label={t.legendAvailable} />
+                <LegendItem colorClasses="bg-[#aa3a3b]" label={t.legendSelected} />
+                <LegendItem colorClasses="bg-orange-500" label={t.legendPending} />
+                <LegendItem colorClasses="bg-red-500" label={t.legendBooked} />
             </div>
         </div>
     );

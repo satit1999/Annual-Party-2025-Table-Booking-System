@@ -19,10 +19,12 @@ const Header: React.FC<HeaderProps> = ({ currentLanguage, onLanguageToggle, onAd
         <header className="bg-gradient-to-r from-[#aa3a3b] to-[#8b2f30] text-white p-5 shadow-md">
             <div className="container mx-auto">
                 <div className="flex justify-between items-center flex-wrap gap-5">
-                    <div>
-                        <h1 className="text-2xl font-semibold">{t.headerTitle}</h1>
-                        <p className="opacity-90 text-sm">{t.headerSubtitle}</p>
-                        <p className="opacity-90 text-sm mt-1">{t.eventDate}</p>
+                    <div className="flex items-center gap-4">
+                        <div>
+                            <h1 className="text-2xl font-semibold">{t.headerTitle}</h1>
+                            <p className="opacity-90 text-sm">{t.headerSubtitle}</p>
+                            <p className="opacity-90 text-sm mt-1">{t.eventDate}</p>
+                        </div>
                     </div>
                     <div className="flex gap-4 items-center">
                         <button

@@ -1,3 +1,4 @@
+
 # วิธีการเชื่อมต่อระบบจองโต๊ะกับ Google Sheets
 
 คู่มือนี้จะแนะนำขั้นตอนการตั้งค่า Google Sheets เพื่อใช้เป็นฐานข้อมูลสำหรับระบบจองโต๊ะของคุณ
@@ -14,7 +15,7 @@
 3.  **สำคัญมาก:** เปลี่ยนชื่อชีตแรก (Sheet1) ให้เป็น **`Bookings`** (ต้องตรงตามนี้ทุกตัวอักษร)
 4.  ในแถวแรกของชีต `Bookings` ให้คัดลอกและวางหัวข้อคอลัมน์ต่อไปนี้ตามลำดับ:
 
-    `id, parentPrefix, parentFirstName, parentLastName, parentPhone, studentPrefix, studentFirstName, studentLastName, studentProgram, studentClass, seats, total, status, timestamp, bookedBy`
+    `id, parentPrefix, parentFirstName, parentLastName, parentPhone, studentPrefix, studentFirstName, studentLastName, studentProgram, studentClass, seats, total, status, timestamp, bookedBy, paymentTimestamp, confirmedBy`
 
 ---
 
@@ -26,18 +27,16 @@
 
     ```javascript
     // The headers in the Google Sheet must be exactly:
-    // id, parentPrefix, parentFirstName, parentLastName, parentPhone, studentPrefix, studentFirstName, studentLastName, studentProgram, studentClass, seats, total, status, timestamp, bookedBy
+    // id, parentPrefix, parentFirstName, parentLastName, parentPhone, studentPrefix, studentFirstName, studentLastName, studentProgram, studentClass, seats, total, status, timestamp, bookedBy, paymentTimestamp, confirmedBy
 
     const SHEET_NAME = 'Bookings';
 
-    // This function runs when a GET request is made to the script URL
     function doGet(e) {
       try {
         const action = e.parameter.action;
 
         if (action === 'READ') {
           const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-          // Return empty array if sheet doesn't exist or is empty
           if (!sheet || sheet.getLastRow() < 2) {
              return ContentService
               .createTextOutput(JSON.stringify({ status: 'success', data: [] }))
@@ -45,7 +44,7 @@
           }
 
           const data = sheet.getDataRange().getValues();
-          const headers = data.shift(); // Remove header row
+          const headers = data.shift();
           
           const bookingsData = data.map(row => {
             const flatBooking = {};
@@ -53,7 +52,6 @@
               flatBooking[header] = row[index];
             });
             
-            // Reconstruct the nested object structure the frontend expects
             return {
               id: flatBooking.id,
               parent: {
@@ -74,6 +72,8 @@
               status: flatBooking.status,
               timestamp: flatBooking.timestamp,
               bookedBy: flatBooking.bookedBy,
+              paymentTimestamp: flatBooking.paymentTimestamp,
+              confirmedBy: flatBooking.confirmedBy,
             };
           });
 
@@ -93,10 +93,9 @@
       }
     }
 
-    // This function runs when a POST request is made to the script URL
     function doPost(e) {
       const lock = LockService.getScriptLock();
-      lock.waitLock(30000); // Wait up to 30 seconds for other processes to finish
+      lock.waitLock(30000);
 
       try {
         const requestData = JSON.parse(e.postData.contents);
@@ -140,7 +139,7 @@
           let rowIndexToUpdate = -1;
           for (let i = 1; i < data.length; i++) {
             if (data[i][idColumnIndex] == idToUpdate) {
-              rowIndexToUpdate = i + 1; // Sheet rows are 1-indexed
+              rowIndexToUpdate = i + 1;
               break;
             }
           }
@@ -181,7 +180,7 @@
 
 2.  จะปรากฏหน้าต่าง "New deployment" ขึ้นมา ให้ตั้งค่าดังนี้:
     *   คลิกที่ไอคอนรูปเฟือง (⚙️) ข้างๆ "Select type" และเลือก **Web app**
-    *   **Description:** (ไม่บังคับ) ใส่คำอธิบายสั้นๆ เช่น "Booking System API v1"
+    *   **Description:** (ไม่บังคับ) ใส่คำอธิบายสั้นๆ เช่น "Booking System API v2"
     *   **Execute as:** เลือก **Me** (บัญชี Google ของคุณ)
     *   **Who has access:** **สำคัญมาก!** ต้องเลือกเป็น **Anyone**
 
@@ -203,7 +202,7 @@
 1.  หลังจากให้สิทธิ์เรียบร้อยแล้ว คุณจะได้รับ **Web app URL**
 2.  คลิกปุ่ม **Copy** เพื่อคัดลอก URL นี้
 3.  เปิดไฟล์ **`App.tsx`** ในโปรเจกต์ของคุณ
-4.  มองหาตัวแปร `GOOGLE_SHEET_API_URL` แล้วนำ URL ที่คัดลอกมาไปวางแทนที่ `"YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE"`
+4.  มองหาตัวแปร `GOOGLE_SHEET_API_URL` แล้วนำ URL ที่คัดลอกมาไปวางแทนที่ค่าเดิม
 
     **ตัวอย่าง:**
     ```javascript
